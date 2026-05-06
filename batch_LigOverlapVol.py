@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 import os
-import sys
+import json
 import argparse
 from Bio.PDB import PDBParser, Superimposer
 import numpy as np
 from collections import defaultdict
 import csv
 
-BINDING_POCKET_RESIDUES = {
-    "A": [12, 65, 67, 80, 355]
-}
+# Defaults — override via --binding-residues and --ligand-name
+BINDING_POCKET_RESIDUES = {"A": [12, 65, 67, 80, 355]}
 LIGAND_RESIDUE_NAME = "LIG"
 
 def default_vdw_radius_factory():
@@ -174,12 +173,19 @@ def write_individual_results_to_csv(results_list, output_filepath):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Ligand Volume Analysis")
     parser.add_argument("--input_dir", required=True, help="Path to parent folder containing subfolders with PDBs")
-    parser.add_argument("--output_dir", required=True, help="Directory where summary CSV and images will be saved")
+    parser.add_argument("--output_dir", required=True, help="Directory where summary CSV will be saved")
+    parser.add_argument("--binding-residues", default=None,
+        help='JSON string defining binding pocket residues, e.g. \'{"A": [12, 65, 80]}\'. Defaults to iDopaSnFR residues.')
+    parser.add_argument("--ligand-name", default=LIGAND_RESIDUE_NAME,
+        help=f"Residue name of the ligand in the PDB (default: {LIGAND_RESIDUE_NAME})")
     args = parser.parse_args()
 
     parent_folder_path = args.input_dir
     output_dir = args.output_dir
     os.makedirs(output_dir, exist_ok=True)
+
+    binding_pocket = json.loads(args.binding_residues) if args.binding_residues else BINDING_POCKET_RESIDUES
+    ligand_name = args.ligand_name
 
     overall_summary_csv_path = os.path.join(output_dir, "overall_folder_summary.csv")
     all_subfolder_summary_results = []

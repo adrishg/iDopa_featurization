@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import csv
+import argparse
 import numpy as np
 
 def extract_ca_coordinates(pdb_file, res1, res2, chain_id):
@@ -53,7 +54,6 @@ def analyze_openess(parent_folder, res1, res2, chain_id, output_csv="openess_sum
 # Example usage:
 # Replace with actual residue numbers and chain
 if __name__ == "__main__":
-    import argparse
     parser = argparse.ArgumentParser(description="Calculate openess metrics from PDB folders.")
     parser.add_argument("--parent-folder", required=True, help="Parent folder containing subfolders for each Tag")
     parser.add_argument("--res1", type=int, required=True, help="First residue number")

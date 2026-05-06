@@ -41,6 +41,10 @@ def load_pae_matrix(npz_file, key):
     scaling_factor = 5.0
     return np.exp(-matrix / scaling_factor), matrix
 
+def compute_variance(matrices):
+    stacked = np.stack(matrices)
+    return np.var(stacked, axis=0), np.mean(np.var(stacked, axis=0))
+
 def process_all_folders(parent_folder, output_folder):
     os.makedirs(output_folder, exist_ok=True)
     subfolders = [f.path for f in os.scandir(parent_folder) if f.is_dir()]
@@ -122,10 +126,6 @@ def process_all_folders(parent_folder, output_folder):
         if len(shapes) > 1:
             print(f"Mixed dimensions in {folder_name}, skipping variance calculation.")
             continue
-
-        def compute_variance(matrices):
-            stacked = np.stack(matrices)
-            return np.var(stacked, axis=0), np.mean(np.var(stacked, axis=0))
 
         var_unweighted, compvar_unweighted = compute_variance(matrices_unweighted)
         var_plddt, compvar_plddt = compute_variance(matrices_plddt_weighted)
