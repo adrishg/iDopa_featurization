@@ -54,11 +54,11 @@ Open the Structure Ensemble prediction notebook directly:
 
 [![Open runiDopaBoltz2_SEprediction in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/adrishg/iDopa_featurization/blob/main/runiDopaBoltz2_SEprediction.ipynb)
 
-The notebook supports:
+By default, the run notebook starts DOP and 5HT ligand runs. It also supports:
 
 - DOP and 5HT ligand runs with Boltz2 affinity requests.
 - Custom ligand runs using a label and SMILES.
-- APO protein-only runs with no ligand chain and no affinity request.
+- Optional APO protein-only runs with no ligand chain and no affinity request.
 - Optional repo-backed feature extraction from `featurization/`.
 
 ### 1. Generate Boltz2 input YAMLs — `featurization/csv2yamls_w_molecules.py`
