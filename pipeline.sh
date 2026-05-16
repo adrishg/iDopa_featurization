@@ -19,6 +19,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FEATURIZATION_DIR="$SCRIPT_DIR/featurization"
 
 # ---- CONFIGURE ----
 PROJECT_PATH=''    # root project directory
@@ -38,12 +39,12 @@ ANALYZED_DIR="$PROJECT_PATH/3-AnalyzedData"
 mkdir -p "$MODELS_DIR" "$ANALYZED_DIR"/{DOP,5HT}
 
 # --- Step 1: Generate Boltz2 input YAMLs ---
-python3 "$SCRIPT_DIR/csv2yamls_w_molecules.py" \
+python3 "$FEATURIZATION_DIR/csv2yamls_w_molecules.py" \
     "$DATA_PATH" \
     --output-dir "$PROJECT_PATH/iDopa_DOP" \
     --molecules '{"DOP": "C1=CC(=C(C=C1CCN)O)O"}'
 
-python3 "$SCRIPT_DIR/csv2yamls_w_molecules.py" \
+python3 "$FEATURIZATION_DIR/csv2yamls_w_molecules.py" \
     "$DATA_PATH" \
     --output-dir "$PROJECT_PATH/iDopa_5HT" \
     --molecules '{"5HT": "C1=CC2=C(C=C1O)C(=CN2)CCN"}'

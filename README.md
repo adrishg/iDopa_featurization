@@ -1,8 +1,10 @@
 # iDopa_featurization
 
-Scripts for automated generation, modeling, and structural featurization of iDopaSnFR biosensor variants using [Boltz2](https://github.com/jwohlwend/boltz), an all-atom diffusion model for joint protein–ligand structure prediction.
+[![Open run notebook in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/adrishg/iDopa_featurization/blob/main/runiDopaBoltz2.ipynb)
 
-Starting from a CSV of variant sequences, the pipeline produces a unified feature table describing each biosensor variant and its predicted interactions with small-molecule ligands.
+Tools for iDopaSnFR Structure Ensemble featurization and experimental-feature prediction. The repository combines Boltz2 structure generation, ensemble-derived structural feature extraction, and trained prediction bundles for biosensor variant evaluation.
+
+Starting from a CSV of variant sequences or the Colab notebook input form, the workflow produces Boltz2 structure ensembles, unified feature tables, and prediction-ready outputs for dopamine, serotonin, custom ligand, and APO runs.
 
 ---
 
@@ -11,14 +13,20 @@ Starting from a CSV of variant sequences, the pipeline produces a unified featur
 ```
 pipeline.sh                  — Full pipeline (YAML generation → Boltz2 → analysis), SLURM-ready
 analysis.sh                  — Feature extraction + CSV merging for one prediction set
+runiDopaBoltz2.ipynb              — Colab notebook for ligand/APO Boltz2 runs and repo-backed featurization
+runiDopaBoltz2_SEprediction.ipynb — Colab notebook for Boltz2 + Structure Ensemble feature prediction
 
-csv2yamls_w_molecules.py     — Generate Boltz2 YAML inputs from a CSV of sequences
-batch_LigOverlapVol.py       — Compute ligand overlap volume across ensemble models
-batch_distanceMaps_variance.py — Compute distance-map variance and confidence metrics
-getAffinities.py             — Extract affinity predictions from Boltz2 output files
-getOpenessDistances.py       — Measure PBP domain openness (Cα–Cα distance)
-getOpenessDistancesProp.py   — Openness with open/closed proportion statistics
-merge_csv_tags.py            — Merge feature CSVs by Tag column
+featurization/
+  csv2yamls_w_molecules.py       — Generate Boltz2 YAML inputs from a CSV of sequences
+  batch_LigOverlapVol.py         — Compute ligand overlap volume across ensemble models
+  batch_distanceMaps_variance.py — Compute distance-map variance and confidence metrics
+  getAffinities.py               — Extract affinity predictions from Boltz2 output files
+  getOpenessDistances.py         — Measure PBP domain openness (Cα–Cα distance)
+  getOpenessDistancesProp.py     — Openness with open/closed proportion statistics
+  merge_csv_tags.py              — Merge feature CSVs by Tag column
+
+SEmodels/
+  prediction_bundle_*.zip         — Structure Ensemble prediction model bundles
 ```
 
 ---
@@ -36,12 +44,29 @@ A CSV file with at minimum two columns:
 
 ## Pipeline overview
 
-### 1. Generate Boltz2 input YAMLs — `csv2yamls_w_molecules.py`
+### 0. Run from Colab
+
+Open the Boltz2 run notebook directly:
+
+[![Open runiDopaBoltz2 in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/adrishg/iDopa_featurization/blob/main/runiDopaBoltz2.ipynb)
+
+Open the Structure Ensemble prediction notebook directly:
+
+[![Open runiDopaBoltz2_SEprediction in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/adrishg/iDopa_featurization/blob/main/runiDopaBoltz2_SEprediction.ipynb)
+
+The notebook supports:
+
+- DOP and 5HT ligand runs with Boltz2 affinity requests.
+- Custom ligand runs using a label and SMILES.
+- APO protein-only runs with no ligand chain and no affinity request.
+- Optional repo-backed feature extraction from `featurization/`.
+
+### 1. Generate Boltz2 input YAMLs — `featurization/csv2yamls_w_molecules.py`
 
 Creates one YAML per variant per ligand, with an `affinity` property block.
 
 ```bash
-python3 csv2yamls_w_molecules.py data.csv \
+python3 featurization/csv2yamls_w_molecules.py data.csv \
     --output-dir output_yamls/ \
     --molecules '{"DOP": "C1=CC(=C(C=C1CCN)O)O", "5HT": "C1=CC2=C(C=C1O)C(=CN2)CCN"}'
 ```
@@ -60,7 +85,7 @@ Runs all Python analysis scripts on a predictions directory and merges the resul
 bash analysis.sh /path/to/predictions /path/to/output
 ```
 
-Produces `volumes_variances_affinities_openess_clean.csv` with columns:
+For ligand predictions, produces `volumes_variances_affinities_openess_clean.csv` with columns:
 
 | Column | Source |
 |--------|--------|
@@ -92,7 +117,7 @@ Each Python script is self-contained and can be imported or called directly:
 # In Colab — clone the repo and call scripts from the repo directory
 import subprocess, sys
 
-subprocess.run([sys.executable, "csv2yamls_w_molecules.py",
+subprocess.run([sys.executable, "featurization/csv2yamls_w_molecules.py",
     "data.csv", "--output-dir", "yamls/",
     "--molecules", '{"DOP": "C1=CC(=C(C=C1CCN)O)O"}'], check=True)
 ```
@@ -100,9 +125,9 @@ subprocess.run([sys.executable, "csv2yamls_w_molecules.py",
 Or import functions directly:
 
 ```python
-from batch_LigOverlapVol import process_pdb_files_in_subfolder
-from getAffinities import extract_affinity_values
-from merge_csv_tags import merge_csv_files
+from featurization.batch_LigOverlapVol import process_pdb_files_in_subfolder
+from featurization.getAffinities import extract_affinity_values
+from featurization.merge_csv_tags import merge_csv_files
 ```
 
 ---

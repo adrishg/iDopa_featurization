@@ -7,6 +7,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FEATURIZATION_DIR="$SCRIPT_DIR/featurization"
 
 models_path="$1"
 analyzed_path="$2"
@@ -24,25 +25,25 @@ echo
 mkdir -p "$analyzed_path"
 
 # === Step 1: Feature extraction ===
-python3 "$SCRIPT_DIR/batch_LigOverlapVol.py" \
+python3 "$FEATURIZATION_DIR/batch_LigOverlapVol.py" \
     --input_dir "$models_path" \
     --output_dir "$analyzed_path"
 
-python3 "$SCRIPT_DIR/batch_distanceMaps_variance.py" \
+python3 "$FEATURIZATION_DIR/batch_distanceMaps_variance.py" \
     --input_dir "$models_path" \
     --output_dir "$analyzed_path"
 
-python3 "$SCRIPT_DIR/getAffinities.py" \
+python3 "$FEATURIZATION_DIR/getAffinities.py" \
     --input-dir "$models_path" \
     --output-csv "$analyzed_path/affinities.csv"
 
-python3 "$SCRIPT_DIR/getOpenessDistances.py" \
+python3 "$FEATURIZATION_DIR/getOpenessDistances.py" \
     --parent-folder "$models_path" \
     --res1 40 --res2 389 --chain A \
     --output-csv "$analyzed_path/openess.csv"
 
 # === Step 2: Merge feature CSVs ===
-python3 "$SCRIPT_DIR/merge_csv_tags.py" \
+python3 "$FEATURIZATION_DIR/merge_csv_tags.py" \
     --primary_csv "$analyzed_path/overall_folder_summary.csv" \
     --secondary_csv "$analyzed_path/composite_variances.csv" \
     --output_csv "$analyzed_path/volumes_variances.csv" \
@@ -50,14 +51,14 @@ python3 "$SCRIPT_DIR/merge_csv_tags.py" \
     --columns_to_merge variance_avg variance_pLDDT_w complex_PDE_avg complex_PDE_var \
         complex_PDE_min complex_PDE_max PAE_avg PDE_avg
 
-python3 "$SCRIPT_DIR/merge_csv_tags.py" \
+python3 "$FEATURIZATION_DIR/merge_csv_tags.py" \
     --primary_csv "$analyzed_path/volumes_variances.csv" \
     --secondary_csv "$analyzed_path/affinities.csv" \
     --output_csv "$analyzed_path/volumes_variances_affinities.csv" \
     --ref_column Tag \
     --columns_to_merge affinity_pred_value affinity_probability_binary
 
-python3 "$SCRIPT_DIR/merge_csv_tags.py" \
+python3 "$FEATURIZATION_DIR/merge_csv_tags.py" \
     --primary_csv "$analyzed_path/volumes_variances_affinities.csv" \
     --secondary_csv "$analyzed_path/openess.csv" \
     --output_csv "$analyzed_path/volumes_variances_affinities_openess.csv" \
