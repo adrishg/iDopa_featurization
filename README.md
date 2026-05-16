@@ -1,144 +1,290 @@
-# iDopa_featurization
+# iDopaSnFR Structural Ensemble Modeling & Prediction
 
-[![Open run notebook in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/adrishg/iDopa_featurization/blob/main/runiDopaBoltz2.ipynb)
+[![Run Boltz2 Notebook](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/adrishg/iDopa_featurization/blob/main/runiDopaBoltz2.ipynb)
+[![Run SE Prediction Notebook](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/adrishg/iDopa_featurization/blob/main/runiDopaBoltz2_SEprediction.ipynb)
 
-Tools for iDopaSnFR Structure Ensemble featurization and experimental-feature prediction. The repository combines Boltz2 structure generation, ensemble-derived structural feature extraction, and trained prediction bundles for biosensor variant evaluation.
+Structure-ensemble-based prediction framework for engineering and evaluating **iDopaSnFR dopamine biosensor variants** using **Boltz-2 structural modeling**, ensemble-derived structural features, and machine learning prediction models.
 
-Starting from a CSV of variant sequences or the Colab notebook input form, the workflow produces Boltz2 structure ensembles, unified feature tables, and prediction-ready outputs for dopamine, serotonin, custom ligand, and APO runs.
+This repository combines:
+
+- Boltz-2 structure generation
+- Structural ensemble (SE) feature extraction
+- Automated visualization and analysis
+- Experimental-property prediction models
+- Future integration with protein language model (PLM) voting systems
+
+The framework was designed for iterative biosensor engineering, where ensembles of predicted structures are used to estimate experimentally relevant biosensor properties before experimental screening.
+
+> Small context: iDopaSnFR is a dopamine biosensor derived from a PBP/Venus-Flytrap-like scaffold engineered for neurotransmitter sensing.
 
 ---
 
-## Repository structure
+# Overview
 
-```
-pipeline.sh                  — Full pipeline (YAML generation → Boltz2 → analysis), SLURM-ready
-analysis.sh                  — Feature extraction + CSV merging for one prediction set
-runiDopaBoltz2.ipynb              — Colab notebook for ligand/APO Boltz2 runs and repo-backed featurization
-runiDopaBoltz2_SEprediction.ipynb — Colab notebook for Boltz2 + Structure Ensemble feature prediction
+The repository currently contains **two main Colab notebooks**:
+
+| Notebook | Purpose |
+|---|---|
+| `runiDopaBoltz2.ipynb` | Generate and visualize Boltz-2 structural models |
+| `runiDopaBoltz2_SEprediction.ipynb` | Run structural ensemble feature extraction + experimental-property prediction |
+
+The workflow supports:
+
+- Dopamine (`DOP`) ligand modeling
+- Serotonin (`5HT`) ligand modeling
+- Optional APO runs
+- Optional custom ligands via SMILES
+- Structural ensemble featurization
+- Prediction of experimental biosensor properties
+
+---
+
+# Repository Structure
+
+```text
+runiDopaBoltz2.ipynb
+    Main Boltz-2 notebook for generating and visualizing models
+
+runiDopaBoltz2_SEprediction.ipynb
+    Structural Ensemble prediction workflow notebook
+
+pipeline.sh
+    Full SLURM-ready pipeline
+
+analysis.sh
+    Feature extraction and CSV merging
 
 featurization/
-  csv2yamls_w_molecules.py       — Generate Boltz2 YAML inputs from a CSV of sequences
-  batch_LigOverlapVol.py         — Compute ligand overlap volume across ensemble models
-  batch_distanceMaps_variance.py — Compute distance-map variance and confidence metrics
-  getAffinities.py               — Extract affinity predictions from Boltz2 output files
-  getOpenessDistances.py         — Measure PBP domain openness (Cα–Cα distance)
-  getOpenessDistancesProp.py     — Openness with open/closed proportion statistics
-  merge_csv_tags.py              — Merge feature CSVs by Tag column
+    csv2yamls_w_molecules.py
+    batch_LigOverlapVol.py
+    batch_distanceMaps_variance.py
+    getAffinities.py
+    getOpenessDistances.py
+    getOpenessDistancesProp.py
+    merge_csv_tags.py
 
 SEmodels/
-  prediction_bundle_*.zip         — Structure Ensemble prediction model bundles
+    prediction_bundle_*.zip
+    Best-performing trained prediction models
+
+PLM/
+    Placeholder for future Protein Language Model integration
 ```
 
 ---
 
-## Input
+# Structural Ensemble (SE) Workflow
 
-A CSV file with at minimum two columns:
+The Structural Ensemble workflow uses multiple Boltz-2 models per sequence to estimate conformational variability and extract predictive structural descriptors.
 
-| Tag     | sequence         |
-|---------|------------------|
-| variantA | MKTLLLT...      |
-| variantB | MKTLLLT...      |
+Current standard workflow:
+
+```text
+Sequence
+    ↓
+Boltz-2 Ensemble Modeling
+    ↓
+Structural Ensemble Feature Extraction
+    ↓
+Prediction Models
+    ↓
+Experimental Property Predictions
+```
+
+Typical run:
+
+- ~25 Boltz-2 models per ligand condition
+- Dopamine ensemble
+- Serotonin ensemble
+- Optional APO ensemble
+
+The extracted ensemble features are then used as input for trained prediction models.
 
 ---
 
-## Pipeline overview
+# What the Structural Ensemble Features Capture
 
-### 0. Run from Colab
+The SE featurization pipeline extracts metrics describing:
 
-Open the Boltz2 run notebook directly:
+## Ligand confidence and consistency
 
-[![Open runiDopaBoltz2 in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/adrishg/iDopa_featurization/blob/main/runiDopaBoltz2.ipynb)
+- Ligand pLDDT
+- Ligand positional variance
+- Ensemble ligand pose agreement
+- Confidence-weighted ligand overlap
 
-Open the Structure Ensemble prediction notebook directly:
+## Predicted affinity metrics
 
-[![Open runiDopaBoltz2_SEprediction in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/adrishg/iDopa_featurization/blob/main/runiDopaBoltz2_SEprediction.ipynb)
+- Boltz-2 affinity prediction values
+- Binary affinity confidence estimates
 
-By default, the run notebook starts DOP and 5HT ligand runs. It also supports:
+## Conformational variability
 
-- DOP and 5HT ligand runs with Boltz2 affinity requests.
-- Custom ligand runs using a label and SMILES.
-- Optional APO protein-only runs with no ligand chain and no affinity request.
-- Optional repo-backed feature extraction from `featurization/`.
+- Distance-map variance
+- PDE / PAE ensemble metrics
+- Ensemble spread
 
-### 1. Generate Boltz2 input YAMLs — `featurization/csv2yamls_w_molecules.py`
+## Biosensor opening/closing behavior
 
-Creates one YAML per variant per ligand, with an `affinity` property block.
+- Open-state distances
+- Closed-state distances
+- Openness range across ensemble
 
-```bash
-python3 featurization/csv2yamls_w_molecules.py data.csv \
-    --output-dir output_yamls/ \
-    --molecules '{"DOP": "C1=CC(=C(C=C1CCN)O)O", "5HT": "C1=CC2=C(C=C1O)C(=CN2)CCN"}'
-```
+## Ensemble stability
 
-`--molecules` accepts a JSON string or a path to a `.json` file.
+- Cross-model structural consistency
+- Confidence-weighted variability estimates
 
-### 2. Run Boltz2 predictions
+---
 
-The `pipeline.sh` calls `boltz predict` directly. The conda environment must have `boltz` installed. Adapt the `eval "$(conda shell.bash hook)"` / `conda activate` lines to your environment.
+# Main Prediction Targets
 
-### 3. Extract features — `analysis.sh`
+The repository currently predicts several experimentally relevant biosensor properties independently.
 
-Runs all Python analysis scripts on a predictions directory and merges the results.
+Current prediction targets include:
 
-```bash
-bash analysis.sh /path/to/predictions /path/to/output
-```
+| Property | Description |
+|---|---|
+| `DA_EC50` | Dopamine EC50 |
+| `DA_F_F` | Dopamine ΔF/F |
+| `5HT_EC50` | Serotonin EC50 |
+| `5HT_F_F` | Serotonin ΔF/F |
+| `F0` | Baseline fluorescence |
+| `5HT_Selectivity` | Dopamine vs serotonin selectivity |
 
-For ligand predictions, produces `volumes_variances_affinities_openess_clean.csv` with columns:
+Predictions are currently returned as:
 
-| Column | Source |
-|--------|--------|
-| `Tag` | variant name (suffix stripped) |
-| `Ligand` | DOP or 5HT |
-| `overlap_volume`, `overlap_w_pos_volume`, `overlap_w_neg_volume` | `batch_LigOverlapVol.py` |
-| `ligand_pLDDT_avg/min/max` | `batch_LigOverlapVol.py` |
-| `variance_avg`, `variance_pLDDT_w` | `batch_distanceMaps_variance.py` |
-| `complex_PDE_avg/var/min/max`, `PAE_avg`, `PDE_avg` | `batch_distanceMaps_variance.py` |
-| `affinity_pred_value`, `affinity_probability_binary` | `getAffinities.py` |
-| `openess_avg/min/max/range` | `getOpenessDistances.py` |
+- Predicted class
+- Human-readable label
+- Confidence score
 
-### 4. Full pipeline — `pipeline.sh`
+Example output:
 
-Orchestrates steps 1–3 for both DOP and 5HT separately via SLURM.
-Edit `PROJECT_PATH` and `DATA_PATH` at the top of the file before submitting.
+```text
+DA_EC50__pred_label           Low (<= 231.3)
+DA_EC50__pred_conf            0.946
 
-```bash
-sbatch pipeline.sh
+DA_F_F__pred_label            Mid (1.894–2.537)
+DA_F_F__pred_conf             0.570
+
+5HT_Selectivity__pred_label   Mid (1.705–9.937)
+5HT_Selectivity__pred_conf    0.995
 ```
 
 ---
 
-## Running individual scripts in Colab
+# Notebook 1 — Boltz-2 Modeling
 
-Each Python script is self-contained and can be imported or called directly:
+## `runiDopaBoltz2.ipynb`
 
-```python
-# In Colab — clone the repo and call scripts from the repo directory
-import subprocess, sys
+[![Run Notebook](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/adrishg/iDopa_featurization/blob/main/runiDopaBoltz2.ipynb)
 
-subprocess.run([sys.executable, "featurization/csv2yamls_w_molecules.py",
-    "data.csv", "--output-dir", "yamls/",
-    "--molecules", '{"DOP": "C1=CC(=C(C=C1CCN)O)O"}'], check=True)
-```
+This notebook is intended for:
 
-Or import functions directly:
+- Running Boltz-2 predictions
+- Visualizing generated structures
+- Comparing ligand-bound states
+- Rapid exploratory modeling
 
-```python
-from featurization.batch_LigOverlapVol import process_pdb_files_in_subfolder
-from featurization.getAffinities import extract_affinity_values
-from featurization.merge_csv_tags import merge_csv_files
-```
+Supports:
+
+- Dopamine (`DOP`)
+- Serotonin (`5HT`)
+- Optional APO runs
+- Optional custom ligands via SMILES
+
+Features:
+
+- Interactive visualization
+- Ensemble visualization
+- Reference structure overlay
+- Ligand comparison
+- Quick structural inspection
 
 ---
 
-## Dependencies
+# Notebook 2 — Structural Ensemble Prediction
 
-```
-biopython
-numpy
-scipy
-matplotlib
-pandas
-pyyaml
-```
+## `runiDopaBoltz2_SEprediction.ipynb`
+
+[![Run Notebook](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/adrishg/iDopa_featurization/blob/main/runiDopaBoltz2_SEprediction.ipynb)
+
+This notebook performs the full SE workflow:
+
+1. Generate Boltz-2 ensembles
+2. Extract structural ensemble features
+3. Visualize ensemble metrics
+4. Compare against references
+5. Run trained prediction models
+6. Generate prediction tables
+
+This notebook:
+
+- Runs ~25 models per ligand condition
+- Extracts all structural ensemble descriptors
+- Automatically assembles feature tables
+- Applies latest trained prediction bundles
+
+---
+
+# Example SE Feature Table
+
+The generated feature tables include metrics such as:
+
+| Feature Type | Examples |
+|---|---|
+| Ligand overlap | `overlap_volume` |
+| Confidence-weighted overlap | `overlap_w_pos_volume` |
+| Ensemble variance | `variance_avg` |
+| PDE/PAE metrics | `complex_PDE_avg` |
+| Openness metrics | `openess_avg` |
+| Affinity metrics | `affinity_pred_value` |
+| Ligand confidence | `ligand_pLDDT_avg` |
+
+---
+
+# Current Modeling Strategy
+
+The current Structural Ensemble framework focuses on:
+
+- Ensemble-based structural variability
+- Confidence-aware structural descriptors
+- Ligand consistency across models
+- Multi-property prediction
+
+Rather than relying on a single predicted structure, the workflow uses ensemble behavior across many Boltz-2 models as predictive signal.
+
+---
+
+# Future Directions
+
+Planned additions include:
+
+## Protein Language Models (PLM)
+
+A parallel PLM-based prediction pipeline is currently under development.
+
+Goals include:
+
+- Combining SE and PLM predictions
+- Building consensus/voting systems
+- Prioritizing variants supported by multiple independent models
+
+Future workflows may use:
+
+- Structural Ensemble models
+- Protein Language Models
+- Consensus ranking systems
+
+to prioritize variants for experimental testing.
+
+---
+
+# Notes
+
+This repository is under active development and currently serves as both:
+
+- A modeling framework
+- An experimental biosensor engineering platform
+
+Some modules and prediction systems are still evolving as additional experimental datasets become available.
